@@ -34,7 +34,7 @@ afterAll(async () => {
 });
 
 describe("GET /books/", () => {
-	test("Get a json response with an object including and array of books of length 0", async () => {
+	test("If we get json with a books array (should be empty at this point)", async () => {
 		// console.log("testBookJSON:",testBookJSON);
 		const res = await request(app).get("/books");
 		expect(res.statusCode).toBe(200);
@@ -44,11 +44,70 @@ describe("GET /books/", () => {
 	});
 });
 
-// TEST POST TO /books/
+// TEST GET BY ISBN
+describe("GET /books/:ISBN", () => {
+	test("If we get back our test book when we try to get it.", async () => {
+		// first insert it through db.query
+		const db_result = await db.query(
+			`
+            INSERT INTO books 
+                (
+                    isbn,
+                    amazon_url,
+                    author,
+                    language,
+                    pages,
+                    publisher,
+                    title,
+                    year
+                )
+            VALUES 
+                (
+                    $1,
+                    $2,
+                    $3,
+                    $4,
+                    $5,
+                    $6,
+                    $7,
+                    $8
+                )
+            RETURNING * `,
+			[
+				testBookJSON.isbn,
+				testBookJSON.amazon_url,
+				testBookJSON.author,
+				testBookJSON.language,
+				testBookJSON.pages,
+				testBookJSON.publisher,
+				testBookJSON.title,
+				testBookJSON.year,
+			]
+		);
+
+		console.log("-----------------\ndb_result:", db_result.rows);
+		// then request it through the routes
+		const res = await request(app).get("/books/1");
+		console.log("-----------------\nres.body:", res.body);
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toEqual({
+			book: {
+				isbn: "1",
+				amazon_url: "http://amazon.com/",
+				author: "Author Test",
+				language: "English",
+				pages: 10,
+				publisher: "Jest Test Press",
+				title: "THE JSON BOOK TEST",
+				year: 2023,
+			},
+		});
+	});
+});
+
 describe("POST /books/", () => {
 	test("Post a book with valid json to the route /books/ and in effect insert a book into the db", async () => {
 		// console.log("testBookJSON:",testBookJSON);
-		// SEND THE TEST BOOK JSON WITHT HE REQUEST.
 		const res = await request(app).post("/books/").send(testBookJSON);
 		// console.log("-----------------\nres.body:", res.body);
 		const db_result = await db.query(` SELECT * FROM books`);
