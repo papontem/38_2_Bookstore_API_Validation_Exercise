@@ -1,41 +1,46 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Generated schema for Root",
-    "type": "object",
-    "properties": {
-      "isbn": {
-        "type": "string"
-      },
-      "amazon_url": {
-        "type": "string"
-      },
-      "author": {
-        "type": "string"
-      },
-      "language": {
-        "type": "string"
-      },
-      "pages": {
-        "type": "number"
-      },
-      "publisher": {
-        "type": "string"
-      },
-      "title": {
-        "type": "string"
-      },
-      "year": {
-        "type": "number"
-      }
-    },
-    "required": [
-      "isbn",
-      "amazon_url",
-      "author",
-      "language",
-      "pages",
-      "publisher",
-      "title",
-      "year"
-    ]
-  }
+	"definitions": {},
+	"$comment": "I started creating this schema by use of this resource: https://transform.tools/json-to-json-schema , then edited it using https://json-schema.org/understanding-json-schema/index.html",
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"title": "Generated schema for Root",
+	"type": "object",
+	"required": [
+		"isbn",
+		"amazon_url",
+		"author",
+		"language",
+		"pages",
+		"publisher",
+		"title",
+		"year"
+	],
+	"properties": {
+		"isbn": {
+			"type": "string",
+			"maxLength": 10
+		},
+		"amazon_url": {
+			"type": "string",
+			"format": "uri"
+		},
+		"author": {
+			"type": "string"
+		},
+		"language": {
+			"type": "string"
+		},
+		"pages": {
+			"type": "number"
+		},
+		"publisher": {
+			"type": "string"
+		},
+		"title": {
+			"type": "string"
+		},
+		"year": {
+			"type": "number",
+			"minimum": 0
+		}
+	}
+}

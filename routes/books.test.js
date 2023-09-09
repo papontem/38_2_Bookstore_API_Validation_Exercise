@@ -8,6 +8,28 @@ const app = require("../app");
 const db = require("../db");
 
 let testBookJSON;
+async function insertTestBookIntoDB() {
+	const db_result = await db.query(
+		`
+        INSERT INTO books 
+            (isbn, amazon_url, author, language, pages, publisher, title, year)
+        VALUES 
+            ( $1, $2, $3, $4, $5, $6, $7, $8 )
+        RETURNING * `,
+		[
+			testBookJSON.isbn,
+			testBookJSON.amazon_url,
+			testBookJSON.author,
+			testBookJSON.language,
+			testBookJSON.pages,
+			testBookJSON.publisher,
+			testBookJSON.title,
+			testBookJSON.year,
+		]
+	);
+
+	return db_result;
+}
 
 beforeEach(async () => {
 	console.log("---------\nBefore Each Test!");
@@ -47,32 +69,15 @@ describe("GET /books/", () => {
 // TEST GET BY ISBN
 describe("GET /books/:ISBN", () => {
 	test("If we get back our test book when we try to get it.", async () => {
-		// first insert it through db.query
-		const db_result = await db.query(
-			`
-            INSERT INTO books 
-                (isbn, amazon_url, author, language, pages, publisher, title, year)
-            VALUES 
-                ( $1, $2, $3, $4, $5, $6, $7, $8 )
-            RETURNING * `,
-			[
-				testBookJSON.isbn,
-				testBookJSON.amazon_url,
-				testBookJSON.author,
-				testBookJSON.language,
-				testBookJSON.pages,
-				testBookJSON.publisher,
-				testBookJSON.title,
-				testBookJSON.year,
-			]
-		);
+		// first insert it through db.query function
+		const db_result = await insertTestBookIntoDB();
 
 		// console.log("-----------------\ndb_result:", db_result.rows);
 		// then request it through the routes
 		const res = await request(app).get("/books/1");
 		// console.log("-----------------\nres.body:", res.body);
 
-        // expectations
+		// expectations
 		expect(res.statusCode).toBe(200);
 		expect(res.body).toEqual({
 			book: {
@@ -123,98 +128,67 @@ describe("POST /books/", () => {
 	});
 });
 
-
 describe("PUT /books/:ISBN", () => {
-    test("Update by PUT that a books db entry is correctly set with a requests new data", async () => {
-        // first insert it through db.query
-		const db_result = await db.query(
-			`
-            INSERT INTO books 
-                (isbn, amazon_url, author, language, pages, publisher, title, year)
-            VALUES 
-                ( $1, $2, $3, $4, $5, $6, $7, $8 )
-            RETURNING * `,
-			[
-				testBookJSON.isbn,
-				testBookJSON.amazon_url,
-				testBookJSON.author,
-				testBookJSON.language,
-				testBookJSON.pages,
-				testBookJSON.publisher,
-				testBookJSON.title,
-				testBookJSON.year,
-			]
-		);
+	test("Update by PUT that a books db entry is correctly set with a requests new data", async () => {
+		// first insert it through db.query function
+		const db_result = await insertTestBookIntoDB();
 
-        // then update it through the route
+		// then update it through the route
 		const res = await request(app).put("/books/1").send({
-            isbn: "1",
-            amazon_url: "http://amazon.com/new_link",
-            author: "Author Test2",
-            language: "English 101",
-            pages: 101,
-            publisher: "Jest Test Press Yes",
-            title: "THE JSON BOOK TEST WITH JEST",
-            year: 2023,
-        });
+			isbn: "1",
+			amazon_url: "http://amazon.com/new_link",
+			author: "Author Test2",
+			language: "English 101",
+			pages: 101,
+			publisher: "Jest Test Press Yes",
+			title: "THE JSON BOOK TEST WITH JEST",
+			year: 2023,
+		});
 		// console.log("-----------------\nres.body:", res.body);
 
-        // expectations
+		// expectations
 		expect(res.statusCode).toBe(200);
 		expect(res.body).toEqual({
 			book: {
-                isbn: "1",
-                amazon_url: "http://amazon.com/new_link",
-                author: "Author Test2",
-                language: "English 101",
-                pages: 101,
-                publisher: "Jest Test Press Yes",
-                title: "THE JSON BOOK TEST WITH JEST",
-                year: 2023,
-            },
+				isbn: "1",
+				amazon_url: "http://amazon.com/new_link",
+				author: "Author Test2",
+				language: "English 101",
+				pages: 101,
+				publisher: "Jest Test Press Yes",
+				title: "THE JSON BOOK TEST WITH JEST",
+				year: 2023,
+			},
 		});
-        
-    })
-})
+	});
+});
 
 describe("DELETE /books/:ISBN", () => {
-    test("Delete of a book of isbn = 1", async ()=> {
-        // first insert it through db.query
-		const db_result = await db.query(
-			`
-            INSERT INTO books 
-                (isbn, amazon_url, author, language, pages, publisher, title, year)
-            VALUES 
-                ( $1, $2, $3, $4, $5, $6, $7, $8 )
-            RETURNING * `,
-			[
-				testBookJSON.isbn,
-				testBookJSON.amazon_url,
-				testBookJSON.author,
-				testBookJSON.language,
-				testBookJSON.pages,
-				testBookJSON.publisher,
-				testBookJSON.title,
-				testBookJSON.year,
-			]
-		);
+	test("Delete of a book of isbn = 1", async () => {
+		// first insert it through db.query function
+		const db_result = await insertTestBookIntoDB();
 
-         // then delete it through the route
-		const res = await request(app).delete("/books/1")
+		// then delete it through the route
+		const res = await request(app).delete("/books/1");
 
-        expect(res.statusCode).toBe(200);
-        expect(res.body).toEqual({ message: "Book deleted" });
-    })
-} )
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toEqual({ message: "Book deleted" });
+	});
 
-// /** DELETE /[isbn]   => {message: "Book deleted"} */
+	test("Throws error when trying to Delete a book with invalid isbn of 0", async () => {
+		// first insert it through db.query function
+		const db_result = await insertTestBookIntoDB();
 
-// router.delete("/:isbn", async function (req, res, next) {
-    //     try {
-        //       await Book.remove(req.params.isbn);
-//       return res.json({ message: "Book deleted" });
-//     } catch (err) {
-    //       return next(err);
-//     }
-//   });
-  
+		// then delete it through the route
+		const res = await request(app).delete("/books/0");
+
+		expect(res.statusCode).toBe(404);
+		expect(res.body).toEqual({
+			error: {
+				message: "There is no book with an isbn 0",
+				status: 404,
+			},
+			message: "There is no book with an isbn 0",
+		});
+	});
+});
